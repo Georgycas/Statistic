@@ -1,0 +1,87 @@
+def calculate_parity_bits(data):
+    # Calculate the number of required parity bits (k)
+    k = 0
+    while 2 ** k < len(data) + k + 1:
+        k += 1
+
+    # Initialize parity positions and encoded data
+    parity_positions = [2 ** i for i in range(k)]
+    encoded_data = [0] * (len(data) + k)
+    
+    # Fill in data bits at their respective positions
+    j = 0
+    for i in range(1, len(encoded_data) + 1):
+        if i not in parity_positions:
+            encoded_data[i - 1] = int(data[j])
+            j += 1
+
+    # Calculate and set parity bits
+    for i in range(k):
+        parity_bit_position = 2 ** i
+        xor_values = [encoded_data[j - 1] for j in range(1, len(encoded_data) + 1) if j & parity_bit_position != 0]
+        encoded_data[parity_bit_position - 1] = sum(xor_values) % 2
+
+    return ''.join(map(str, encoded_data))
+
+def HamEncoding(msg):
+    encoded_msg = calculate_parity_bits(msg)
+    return encoded_msg
+
+def HamDecoding(rcv, k):
+    received_data = list(map(int, rcv))
+    parity_positions = [2 ** i for i in range(k)]
+    error_positions = []
+
+    # Check and correct parity bits
+    for i in range(k):
+        parity_bit_position = 2 ** i
+        xor_values = [received_data[j - 1] for j in range(1, len(received_data) + 1) if j & parity_bit_position != 0]
+        
+        if sum(xor_values) % 2 != 0:
+            error_positions.append(parity_bit_position)
+
+    # Correct errors
+    for pos in error_positions:
+        received_data[pos - 1] ^= 1  # Flip the bit
+
+    # Extract corrected data bits
+    corrected_data = [received_data[i - 1] for i in range(1, len(received_data) + 1) if i not in parity_positions]
+    
+    return (''.join(map(str, corrected_data)), error_positions)
+
+# Test cases
+org_sig1 = '1101'
+encoded_sig1 = HamEncoding(org_sig1)
+print(f"Encoded: {org_sig1} => {encoded_sig1}")
+
+received_sig1 = '1010101'
+result1, errors1 = HamDecoding(received_sig1, 3)
+if errors1:
+    print(f"Error at Positions {errors1}, and correct data: {result1}")
+else:
+    print("No error")
+
+org_sig2 = '1001011'
+encoded_sig2 = HamEncoding(org_sig2)
+print(f"Encoded: {org_sig2} => {encoded_sig2}")
+
+received_sig2 = '1010001'
+result2, errors2 = HamDecoding(received_sig2, 4)
+if errors2:
+    print(f"Error at Positions {errors2}, and correct data: {result2}")
+else:
+    print("No error")
+
+received_sig3 = '10110010011'
+result3, errors3 = HamDecoding(received_sig3, 4)
+if errors3:
+    print(f"Error at Positions {errors3}, and correct data: {result3}")
+else:
+    print("No error")
+
+received_sig4 = '10110000011'
+result4, errors4 = HamDecoding(received_sig4, 4)
+if errors4:
+    print(f"Error at Positions {errors4}, and correct data: {result4}")
+else:
+    print("No error")
